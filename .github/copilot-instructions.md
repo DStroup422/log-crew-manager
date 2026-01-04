@@ -13,8 +13,10 @@ This is an Android app for logging crew management in the forestry/logging indus
 
 ## Key Patterns
 
-- **Entity Definitions**: All Room entities are defined in `MainActivity.kt` (unconventional - typically in separate data/model files)
-- **Utility Objects**: Business logic encapsulated in object singletons (PayCalculator, GeoUtils)
+- **Entity Definitions**: Room entities are now in `Entities.kt` (moved from MainActivity.kt for better KAPT processing)
+- **Database Layer**: AppDatabase with DAOs for CRUD operations on all entities
+- **ViewModel**: LoggingViewModel manages data flows and business logic
+- **Utility Objects**: PayCalculator for worker pay distribution, GeoUtils for geospatial calculations
 - **Package Structure**: `com.loggingapp` namespace
 - **Compose Integration**: Direct integration of Google Maps with Compose using `maps-compose` library
 
@@ -41,9 +43,9 @@ This is an Android app for logging crew management in the forestry/logging indus
 
 ## Common Tasks
 
-- **Add New Entity**: Define @Entity data class in MainActivity.kt, update Room version if schema changes
+- **Add New Entity**: Define @Entity data class in `Entities.kt`, add DAO methods, update AppDatabase
 - **Map Features**: Use `GoogleMap` composable with `Polygon` for boundaries, `Marker` for points
-- **Database Operations**: Implement DAOs in separate files (none currently exist - add as needed)
+- **Database Operations**: Use DAOs in ViewModel for data access
 - **API Key**: Replace `YOUR_API_KEY_HERE` in AndroidManifest.xml for Maps functionality
 
 ## Code Style
@@ -51,5 +53,6 @@ This is an Android app for logging crew management in the forestry/logging indus
 - **Language**: Kotlin only
 - **UI Framework**: Jetpack Compose (no XML layouts)
 - **Data Classes**: Immutable entities with auto-generated IDs
+- **Architecture**: MVVM with Room database and Flow for reactive data
 - **Geospatial**: LatLng coordinates, polygon point-in-polygon checks</content>
   <parameter name="filePath">/workspaces/log-crew-manager/.github/copilot-instructions.md
