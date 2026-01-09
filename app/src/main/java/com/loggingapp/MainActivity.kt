@@ -13,7 +13,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
-import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodels.compose.viewModels
+import kotlinx.coroutines.flow.first
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.Composable
@@ -26,8 +27,7 @@ import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.Polygon
 import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 
 @Dao
 interface WorkerDao {
@@ -144,25 +144,28 @@ class LoggingViewModel(private val database: AppDatabase) : ViewModel() {
 
     fun addSampleData() {
         viewModelScope.launch {
-            // Add sample workers
-            database.workerDao().insertWorker(WorkerEntity(name = "John Doe", payPercentage = 50.0))
-            database.workerDao().insertWorker(WorkerEntity(name = "Jane Smith", payPercentage = 30.0))
-            database.workerDao().insertWorker(WorkerEntity(name = "Bob Johnson", payPercentage = 20.0))
+            val existingWorkers = database.workerDao().getAllWorkers().first()
+            if (existingWorkers.isEmpty()) {
+                // Add sample workers
+                database.workerDao().insertWorker(WorkerEntity(name = "John Doe", payPercentage = 50.0))
+                database.workerDao().insertWorker(WorkerEntity(name = "Jane Smith", payPercentage = 30.0))
+                database.workerDao().insertWorker(WorkerEntity(name = "Bob Johnson", payPercentage = 20.0))
 
-            // Add sample locations
-            val pickupId = database.locationDao().insertLocation(LocationEntity(name = "Forest Entrance", lat = 45.0, lng = -122.0))
-            val dropoffId = database.locationDao().insertLocation(LocationEntity(name = "Mill Site", lat = 45.1, lng = -122.1))
+                // Add sample locations
+                val pickupId = database.locationDao().insertLocation(LocationEntity(name = "Forest Entrance", lat = 45.0, lng = -122.0))
+                val dropoffId = database.locationDao().insertLocation(LocationEntity(name = "Mill Site", lat = 45.1, lng = -122.1))
 
-            // Add sample load
-            database.loadDao().insertLoad(LoadEntity(date = System.currentTimeMillis(), value = 1000.0, pickupLocationId = pickupId, dropoffLocationId = dropoffId))
+                // Add sample load
+                database.loadDao().insertLoad(LoadEntity(date = System.currentTimeMillis(), value = 1000.0, pickupLocationId = pickupId, dropoffLocationId = dropoffId))
 
-            // Add sample property
-            val propertyId = database.propertyDao().insertProperty(PropertyEntity(name = "North Forest", owner = "State Forestry", source = "GIS"))
+                // Add sample property
+                val propertyId = database.propertyDao().insertProperty(PropertyEntity(name = "North Forest", owner = "State Forestry", source = "GIS"))
 
-            // Add property points (triangle)
-            database.propertyPointDao().insertPoint(PropertyPointEntity(propertyId, 45.0, -122.0, 0))
-            database.propertyPointDao().insertPoint(PropertyPointEntity(propertyId, 45.05, -121.95, 1))
-            database.propertyPointDao().insertPoint(PropertyPointEntity(propertyId, 45.02, -122.05, 2))
+                // Add property points (triangle)
+                database.propertyPointDao().insertPoint(PropertyPointEntity(propertyId, 45.0, -122.0, 0))
+                database.propertyPointDao().insertPoint(PropertyPointEntity(propertyId, 45.05, -121.95, 1))
+                database.propertyPointDao().insertPoint(PropertyPointEntity(propertyId, 45.02, -122.05, 2))
+            }
         }
     }
 }
@@ -194,15 +197,18 @@ fun MapScreen(
 }
 
 class MainActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        val database = AppDatabase.getDatabase(this)
-        val viewModel = ViewModelProvider(this, object : ViewModelProvider.Factory {
+    private val database by lazy { AppDatabase.getDatabase(this) }
+    private val viewModel: LoggingViewModel by viewModels {
+        object : ViewModelProvider.Factory {
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
                 @Suppress("UNCHECKED_CAST")
                 return LoggingViewModel(database) as T
             }
-        })[LoggingViewModel::class.java]
+        }
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
 
         // Add sample data if database is empty
         viewModel.addSampleData()

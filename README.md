@@ -16,5 +16,5 @@ gradle assembleDebug
 To install to a device/emulator:
 
 ```bash
-adb install -r app/build/outputs/apk/debug/app-debug.apk
-```
+ install -r app/build/outputs/apk/debug/app-debug.apk
+ 
